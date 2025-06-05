@@ -133,18 +133,6 @@ class PeerEvaluationConfig:
         
         # 預設配置集
         self._presets = {
-            "light": {
-                "description": "輕量評分模式",
-                "peer_assignment": {
-                    "assignments_per_student": 3
-                },
-                "evaluation_form": {
-                    "require_comments": False
-                },
-                "vancouver_algorithm": {
-                    "n_iterations": 15
-                }
-            },
             "standard": {
                 "description": "標準評分模式",
                 "peer_assignment": {
@@ -152,30 +140,6 @@ class PeerEvaluationConfig:
                 },
                 "vancouver_algorithm": {
                     "n_iterations": 25
-                }
-            },
-            "comprehensive": {
-                "description": "全面評分模式",
-                "peer_assignment": {
-                    "assignments_per_student": 5
-                },
-                "evaluation_form": {
-                    "comment_min_length": 50
-                },
-                "vancouver_algorithm": {
-                    "n_iterations": 35,
-                    "alpha": 0.15
-                }
-            },
-            "debug": {
-                "description": "除錯模式",
-                "system": {
-                    "verbose": True,
-                    "debug": True,
-                    "log_level": "DEBUG"
-                },
-                "vancouver_algorithm": {
-                    "n_iterations": 10
                 }
             }
         }

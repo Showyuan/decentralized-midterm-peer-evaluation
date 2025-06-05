@@ -43,95 +43,6 @@ class PeerEvaluationSystem:
     
     # ==================== 核心流程方法 ====================
     
-    def run_full_pipeline(self, csv_file: str = None) -> Dict[str, Any]:
-        """
-        執行完整處理流程（直接API調用版本）
-        
-        Args:
-            csv_file: CSV文件路徑，如果為None則使用配置中的預設路徑
-            
-        Returns:
-            處理結果字典，包含各步驟的輸出文件路徑
-        """
-        if csv_file is None:
-            csv_file = self.config.get_file_path("docs_dir", "Midterm Survey Student Analysis Report.csv")
-        
-        if not os.path.exists(csv_file):
-            raise FileNotFoundError(f"找不到CSV文件: {csv_file}")
-        
-        results = {}
-        
-        print("開始執行完整處理流程...")
-        print()
-        
-        # 步驟1: 處理CSV數據
-        print("步驟1: 處理期中考試數據")
-        print("-" * 40)
-        processor = DataProcessor(self.preset_name)
-        
-        data = processor.load_data(csv_file)
-        if data is None:
-            raise Exception("數據載入失敗")
-        
-        questions = processor.parse_questions()
-        if not questions:
-            raise Exception("題目解析失敗")
-        
-        students = processor.parse_students()
-        if not students:
-            raise Exception("學生數據解析失敗")
-        
-        analysis = processor.analyze_submission_patterns()
-        json_file = processor.export_to_json(analysis=analysis)
-        results['processed_data'] = json_file
-        
-        print(f"✅ 數據處理完成: {json_file}")
-        print()
-        
-        # 步驟2: 生成同儕分派
-        print("步驟2: 生成同儕評分分派")
-        print("-" * 40)
-        engine = AssignmentEngine(self.preset_name)
-        
-        data_loaded = engine.load_data(json_file)
-        if not data_loaded:
-            raise Exception("JSON數據載入失敗")
-        
-        is_feasible = engine.validate_assignment_feasibility()
-        if not is_feasible:
-            raise Exception("分派不可行")
-        
-        assignments = engine.generate_assignments()
-        assignment_file = engine.export_assignments(assignments)
-        results['assignments'] = assignment_file
-        
-        print(f"✅ 分派生成完成: {assignment_file}")
-        print()
-        
-        # 步驟3: 生成評分表單
-        print("步驟3: 生成評分表單")
-        print("-" * 40)
-        generator = FormGenerator(self.preset_name)
-        
-        assignment_loaded = generator.load_assignment_data(assignment_file)
-        if not assignment_loaded:
-            raise Exception("分派數據載入失敗")
-        
-        original_loaded = generator.load_original_data(json_file)
-        if not original_loaded:
-            raise Exception("原始數據載入失敗")
-        
-        form_files = generator.generate_all_forms()
-        results['evaluation_forms'] = form_files
-        
-        print(f"✅ 表單生成完成: {len(form_files)} 個文件")
-        print()
-        
-        print("完整流程執行完成！")
-        print("=" * 60)
-        
-        return results
-    
     # ==================== 單步驟執行方法 ====================
     
     def process_data_only(self, csv_file: str = None) -> str:
@@ -737,58 +648,7 @@ class PeerEvaluationSystem:
         print(f"  需要評語: {form_config['require_comments']}")
         print(f"  顯示統計: {form_config['include_statistics']}")
     
-    def show_menu(self):
-        """顯示互動式選單"""
-        while True:
-            print("\n" + "=" * 60)
-            print("同儕評分系統 - 主選單")
-            print("=" * 60)
-            print("1. 處理CSV數據分析")
-            print("2. 生成同儕分派")
-            print("3. 生成評分表單")
-            print("4. 執行表單填寫模擬")
-            print("5. 收集評分結果")
-            print("6. 執行Vancouver算法")
-            print("7. 生成驗證報告")
-            print("8. 執行完整工作流程")
-            print("9. 顯示結果總結")
-            print("10. 顯示配置信息")
-            print("0. 退出系統")
-            
-            choice = input("\n請選擇操作 (0-10): ").strip()
-            
-            try:
-                if choice == "1":
-                    self.run_data_processing()
-                elif choice == "2":
-                    self.run_assignment_generation()
-                elif choice == "3":
-                    self.run_form_generation()
-                elif choice == "4":
-                    self.run_form_simulator()
-                elif choice == "5":
-                    self.run_result_collector()
-                elif choice == "6":
-                    self.run_vancouver_processor()
-                elif choice == "7":
-                    self.run_verification_report()
-                elif choice == "8":
-                    self.run_complete_workflow()
-                elif choice == "9":
-                    self.show_results_summary()
-                elif choice == "10":
-                    self.show_system_status()
-                elif choice == "0":
-                    print("感謝使用同儕評分系統！")
-                    break
-                else:
-                    print("無效的選擇，請輸入 0-10 之間的數字")
-                    
-            except KeyboardInterrupt:
-                print("\n感謝使用同儕評分系統！")
-                break
-            except Exception as e:
-                print(f"操作執行錯誤: {e}")
+
 
 
 def main():
@@ -799,19 +659,13 @@ def main():
         epilog="""
 使用範例:
   # 執行完整流程（推薦）
-  python main.py --full
+  python main.py --workflow
   
   # 使用特定配置執行完整流程
-  python main.py --full --preset standard
+  python main.py --workflow --preset standard
   
   # 執行完整工作流程（包含模擬和Vancouver算法）
   python main.py --workflow
-  
-  # 自動執行完整工作流程（無互動）
-  python main.py --auto
-  
-  # 顯示互動式選單
-  python main.py --menu
   
   # 只處理數據
   python main.py --data-only --csv docs/exam.csv
@@ -837,14 +691,8 @@ def main():
     
     # 執行模式選項
     execution_group = parser.add_mutually_exclusive_group(required=True)
-    execution_group.add_argument('--full', action='store_true',
-                                help='執行完整基礎流程（數據處理→分派→表單生成）')
     execution_group.add_argument('--workflow', action='store_true',
                                 help='執行完整工作流程（包含模擬和算法）')
-    execution_group.add_argument('--auto', action='store_true',
-                                help='自動執行完整工作流程（無確認）')
-    execution_group.add_argument('--menu', action='store_true',
-                                help='顯示互動式選單')
     execution_group.add_argument('--data-only', action='store_true',
                                 help='只處理CSV數據')
     execution_group.add_argument('--assign-only', action='store_true',
@@ -867,10 +715,7 @@ def main():
     # 處理列出預設配置
     if args.list_presets:
         print("可用的預設配置:")
-        print("- light: 輕量級配置")
-        print("- standard: 標準配置") 
-        print("- intensive: 密集型配置")
-        print("- balanced: 平衡配置")
+        print("- standard: 標準配置")
         return
     
     # 創建系統實例
@@ -880,30 +725,11 @@ def main():
         if args.status:
             system.show_system_status()
             
-        elif args.menu:
-            # 顯示互動式選單
-            system.show_menu()
-            
-        elif args.auto:
-            # 自動執行完整工作流程
-            success = system.run_complete_workflow(skip_confirmation=True)
-            sys.exit(0 if success else 1)
-            
         elif args.workflow:
             # 執行完整工作流程
             success = system.run_complete_workflow(skip_confirmation=False)
             sys.exit(0 if success else 1)
             
-        elif args.full:
-            # 執行基礎完整流程
-            results = system.run_full_pipeline(args.csv)
-            print("\n輸出文件:")
-            for step, file_path in results.items():
-                if isinstance(file_path, list):
-                    print(f"  {step}: {len(file_path)} 個文件")
-                else:
-                    print(f"  {step}: {file_path}")
-                    
         elif args.data_only:
             json_file = system.process_data_only(args.csv)
             print(f"\n輸出文件: {json_file}")

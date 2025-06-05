@@ -1,168 +1,227 @@
-# Vancouver 同儕評分系統
+# 去中心化期中考互評系統 | Decentralized Midterm Peer Evaluation System
 
-基於 Vancouver 算法實現的完整同儕評分系統，提供從資料處理、分派生成到評分分析的整體解決方案。
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
+[![Vancouver Algorithm](https://img.shields.io/badge/Algorithm-Vancouver-orange.svg)]()
 
-## 📋 專案概述
+> 一個基於 Vancouver 演算法的智慧互評系統，提供從原始資料處理到最終結果分析的完整自動化解決方案。
+> 
+> *An intelligent peer evaluation system powered by the Vancouver algorithm, providing complete automated solutions from raw data processing to final result analysis.*
 
-本系統實現了完整的 Vancouver 算法應用於同儕評分場景，主要提供：
-- 學生考試資料處理與分析
-- 自動生成同儕評分分派
-- 產生評分表單與收集結果
-- 使用 Vancouver 算法處理評分資料
-- 生成詳細的分析報告
+## 快速開始 | Quick Start
 
-## 📁 專案結構
+### 安裝與設定 | Installation & Setup
 
-```
-vancouver/
-├── core/                          # 核心算法實現
-├── analysis/                      # 分析工具和模型
-├── peer_evaluation/               # 同儕評分系統
-│   ├── main.py                    # 主控制器
-│   ├── data_processor.py          # 數據處理器
-│   ├── assignment_engine.py       # 分派生成引擎  
-│   ├── form_generator.py          # 評分表單生成器
-│   ├── form_simulator.py          # 表單填寫模擬器
-│   ├── result_collector_simple.py # 結果收集器
-│   ├── vancouver_processor.py     # Vancouver算法處理器
-│   ├── verification_report.py     # 驗證報告生成器
-│   └── config_unified.py          # 統一配置文件
-├── docs/                          # 文件資料夾
-├── workflow_results/              # 工作流程產出
-└── logs/                          # 日志記錄
-```
+1. **克隆專案 | Clone Repository**
+   ```bash
+   git clone https://github.com/Showyuan/decentralized-midterm-peer-evaluation.git
+   cd decentralized-midterm-peer-evaluation
+   ```
 
-## 🚀 使用 peer_evaluation 測試系統
+2. **建立虛擬環境 | Create Virtual Environment** *(建議 | Recommended)*
+   ```bash
+   python -m venv venv
+   # Windows
+   venv\Scripts\activate
+   # macOS/Linux  
+   source venv/bin/activate
+   ```
 
-peer_evaluation 目錄是一個完整的同儕評分測試系統，提供了從資料處理到 Vancouver 算法應用的全流程解決方案。
+3. **安裝相依套件 | Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### 基本使用方式
+4. **系統驗證 | System Verification**
+   ```bash
+   python peer_evaluation/main.py --status
+   ```
+---
 
-#### 1. 互動式選單模式（推薦新手使用）
+## 使用指南 | User Guide
 
-執行互動式選單，選擇要運行的功能：
+### 推薦使用方式 | Recommended Usage Patterns
 
-```bash
-python peer_evaluation/main.py --menu
-```
+#### 1. **一鍵完整執行** | One-Click Complete Execution
 
-這將顯示一個互動式選單，您可以按數字鍵選擇各種功能：
-- 數據處理
-- 生成同儕分派
-- 產生評分表單
-- 模擬表單填寫
-- 收集評分結果
-- 執行 Vancouver 算法
-- 生成驗證報告
+適用於：*初次使用、完整測試流程*  
+*Best for: First-time use, complete testing workflow*
 
-#### 2. 完整自動化流程
-
-##### a. 基礎流程（資料處理→分派→表單生成）
-```bash
-python peer_evaluation/main.py --full
-```
-
-##### b. 完整工作流程（包含模擬填寫和 Vancouver 算法）
 ```bash
 python peer_evaluation/main.py --workflow
 ```
 
-##### c. 自動執行完整流程（無互動確認）
-```bash
-python peer_evaluation/main.py --auto
-```
+> **執行流程** | **Execution Process**:  
+> 資料處理 → 同儕分派 → 表單生成 → 模擬填寫 → 結果收集 → Vancouver 算法 → 驗證報告  
+> *Data Processing → Peer Assignment → Form Generation → Simulation → Result Collection → Vancouver Algorithm → Verification Report*
 
-#### 3. 單步驟執行模式
-
-單獨執行特定步驟：
+#### 2. **分步驟執行** | Step-by-Step Execution
 
 ```bash
-# 只處理CSV數據
-python peer_evaluation/main.py --data-only --csv docs/Midterm\ Survey\ Student\ Analysis\ Report.csv
+# 步驟 1: 處理 CSV 資料 | Step 1: Process CSV data
+python peer_evaluation/main.py --data-only --csv "docs/Midterm Survey Student Analysis Report.csv"
 
-# 只生成同儕分派
+# 步驟 2: 生成同儕分派 | Step 2: Generate peer assignments  
 python peer_evaluation/main.py --assign-only --json workflow_results/1_csv_analysis/midterm_data.json
 
-# 只生成評分表單
-python peer_evaluation/main.py --forms-only --assignment workflow_results/2_form_generation/peer_assignments.json
+# 步驟 3: 生成評分表單 | Step 3: Generate evaluation forms
+python peer_evaluation/main.py --forms-only --assignment workflow_results/2_peer_assignment/peer_assignments.json
+
 ```
 
-### 預設配置使用
-
-系統支援多種預設配置，以適應不同測試場景：
+#### 3. **配置管理** | Configuration Management
 
 ```bash
-# 查看所有可用配置
+# 查看可用配置 | List available configurations
 python peer_evaluation/main.py --list-presets
 
-# 使用指定配置執行完整流程
-python peer_evaluation/main.py --full --preset standard
-```
+# 使用標準配置 | Use standard configuration
+python peer_evaluation/main.py --workflow --preset standard
 
-可用配置包括：
-- `light`: 輕量級配置，適合快速測試
-- `standard`: 標準配置，一般測試場景 
-- `comprehensive`: 綜合配置，進行詳細測試
-- `debug`: 調試配置，提供額外日誌
-
-### 查看系統狀態與結果
-
-```bash
-# 查看系統配置與狀態
+# 查看系統狀態 | View system status  
 python peer_evaluation/main.py --status
 ```
 
-### 工作流程輸出
+---
 
-完整工作流程會依序產生以下輸出：
-1. **CSV 數據分析**：處理考試數據，生成 JSON 格式的結構化數據
-2. **同儕分派**：生成同儕評分分派表
-3. **評分表單**：生成 HTML 格式的評分表單
-4. **表單模擬**：模擬填寫評分表單
-5. **結果收集**：收集並整理評分結果
-6. **Vancouver 處理**：使用 Vancouver 算法處理評分數據
-7. **驗證報告**：產生詳細的分析報告
+## 工作流程與輸出 | Workflow & Output Structure
 
-所有結果都保存在 `workflow_results/` 目錄中，按步驟分類整理。
+### 七階段完整流程 | Seven-Stage Complete Process
 
-## 資料格式說明
+```mermaid
+graph LR
+    A[CSV資料] --> B[資料處理]
+    B --> C[同儕分派]  
+    C --> D[表單生成]
+    D --> E[模擬填寫]
+    E --> F[結果收集]
+    F --> G[Vancouver算法]
+    G --> H[驗證報告]
+```
 
-### 輸入資料
+### 輸出目錄結構 | Output Directory Structure
 
-- **學生考試資料**：CSV 格式，包含學生資訊和答題數據
-- **評分表單**：HTML 格式，用於同儕評分
+執行完整工作流程後，系統會在 `workflow_results/` 目錄下生成以下結構化輸出：
 
-### 輸出資料
+*After running the complete workflow, the system generates the following structured output in the `workflow_results/` directory:*
 
-- **同儕分派表**：JSON 格式，描述誰評價誰
-- **評分結果**：JSON/Excel 格式，包含原始評分數據
-- **Vancouver 結果**：JSON 格式，包含算法處理後的結果
-- **驗證報告**：Excel 格式，包含詳細分析
-
-## 進階功能
-
-### 自定義工作流程
-
-您可以修改 `config_unified.py` 文件來自定義各種參數：
-- 文件路徑設定
-- 評分尺度設定
-- 分派策略設定
-- Vancouver 參數設定
-
-### 算法參數調優
-
-針對 Vancouver 算法的參數調整，可以修改以下設定：
-- `vG_value`：Vancouver 算法的關鍵參數，影響群體一致性測量
-- `tolerance`：容忍度，影響異常評分的識別
-- `iterations`：迭代次數，影響結果精確度
-
-## 實用技巧
-
-1. **使用預設配置**：新使用者建議從 `light` 或 `standard` 配置開始
-2. **檢查輸出目錄**：所有結果都按步驟保存在 `workflow_results/` 目錄
-3. **查看錯誤訊息**：若出現問題，系統會顯示詳細的錯誤信息
-4. **資料備份**：重要資料建議手動備份到 `workflow_results_backup/` 目錄
+```
+workflow_results/
+├── 1_csv_analysis/              # 第一階段：CSV 資料分析 | Stage 1: CSV Data Analysis
+│   └── midterm_data.json        # 結構化學生考試資料 | Structured student exam data
+│
+├── 2_peer_assignment/           # 第二階段：同儕分派 | Stage 2: Peer Assignment  
+│   └── peer_assignments.json    # 學生評分配對表 | Student evaluation pairing table
+│
+├── 3_form_generation/           # 第三階段：表單生成 | Stage 3: Form Generation
+│   └── evaluation_forms/        # 個人化 HTML 評分表單 | Personalized HTML evaluation forms
+│
+├── 4_form_simulation/           # 第四階段：表單模擬 | Stage 4: Form Simulation
+│   └── simulated_responses/     # 模擬學生評分回應 | Simulated student evaluation responses
+│
+├── 5_result_collection/         # 第五階段：結果收集 | Stage 5: Result Collection
+│   └── collected_results.json   # 整合所有評分資料 | Integrated evaluation data
+│
+├── 6_vancouver_processing/      # 第六階段：Vancouver 處理 | Stage 6: Vancouver Processing
+│   └── vancouver_results.json   # 演算法標準化結果 | Algorithm standardized results
+│
+└── 7_verification_report/       # 第七階段：驗證報告 | Stage 7: Verification Report
+    └── verification_report.xlsx # Excel 格式完整報告 | Complete Excel format report
+```
 
 ---
 
-*本系統實現了完整的 Vancouver 算法，並提供了全面的同儕評分解決方案，適用於教育機構、研究團體和需要進行同儕評估的任何場景。*
+## 資料格式說明 | Data Format Specifications
+
+### 輸入資料格式 | Input Data Format
+
+| 檔案類型 | 路徑 | 說明 | Description |
+|---------|------|------|-------------|
+| **學生考試資料** | `docs/Midterm Survey Student Analysis Report.csv` | NTU COOL 匯出的 CSV 格式 | CSV format exported from NTU COOL |
+
+**支援的 CSV 欄位** | **Supported CSV Fields**:
+- 學生姓名、學號、考試成績等基本資訊
+- *Student names, IDs, exam scores, and other basic information*
+
+### 輸出資料說明 | Output Data Description
+
+#### 各階段輸出詳解 | Stage Output Details
+
+| 階段 | 檔案 | 內容說明 | Content Description |
+|------|------|----------|---------------------|
+| **資料處理** | `midterm_data.json` | 標準化的學生考試資料 | Standardized student exam data |
+| **同儕分派** | `peer_assignments.json` | 每位學生的評分對象清單 | List of evaluation targets for each student |
+| **表單生成** | `evaluation_forms/*.html` | 個人化的網頁評分表單 | Personalized web evaluation forms |
+| **模擬填寫** | `simulated_responses/*` | 系統生成的模擬評分資料 | System-generated simulated evaluation data |
+| **結果收集** | `collected_results.json` | 整合所有評分者的原始評分 | Integrated raw scores from all evaluators |
+| **Vancouver** | `vancouver_results.json` | 經演算法處理的最終評分 | Final scores processed by the algorithm |
+| **驗證報告** | `verification_report.xlsx` | 統計分析與品質檢核報告 | Statistical analysis and quality assurance report |
+
+### 配置參數說明 | Configuration Parameters
+
+#### Vancouver 演算法參數 | Vancouver Algorithm Parameters
+
+```python
+VANCOUVER_CONFIG = {
+    'vG_value': 8.0,          # 群體一致性目標值 | Group consistency target value
+    'tolerance': 0.1,         # 收斂容忍度 | Convergence tolerance  
+    'iterations': 25,         # 最大迭代次數 | Maximum iterations
+    'min_evaluators': 4       # 最少評分者數量 | Minimum number of evaluators
+}
+```
+---
+
+## 專案架構 | Project Architecture
+
+### 目錄結構 | Directory Structure
+
+```
+vancouver/
+├── peer_evaluation/           # 核心測試系統 | Core Testing System
+│   ├── main.py                # 系統主控制器 | Main System Controller
+│   ├── config_unified.py      # 統一配置檔 | Unified Configuration
+│   ├── data_processor.py      # 資料處理引擎 | Data Processing Engine
+│   ├── assignment_engine.py   # 分派演算法 | Assignment Algorithm
+│   ├── form_generator.py      # 表單生成器 | Form Generator
+│   ├── form_simulator.py      # 表單模擬器 | Form Simulator
+│   ├── result_collector_simple.py # 結果收集器 | Result Collector
+│   ├── vancouver_processor.py # Vancouver 處理器 | Vancouver Processor
+│   └── verification_report.py # 驗證報告器 | Verification Reporter
+│
+├── core/                     # Vancouver 演算法核心 | Vancouver Algorithm Core
+│   ├── vancouver.py          # 核心演算法實作 | Core algorithm implementation
+│   └── n_theoretical_foundations.py # 數學模型 | Mathematical models
+│
+├── analysis/                 # 分析工具模組 | Analysis Tools Module
+│   ├── vg_analysis.py        # 統計分析工具 | Statistical analysis tools
+│   └── basic_precision_analysis.py # 精度分析工具 | Precision analysis tools
+│
+├── docs/                     # 文檔與範例資料 | Documentation & Sample Data
+│   └── Midterm Survey Student Analysis Report.csv
+│
+├── workflow_results/         # 工作流程輸出 | Workflow Outputs
+│   └── (執行後自動生成 | Auto-generated after execution)
+│
+├── requirements.txt          # 相依套件清單 | Dependencies List
+└── README.md                 # 專案說明文件 | Project Documentation
+```
+
+## 進階使用 | Advanced Usage
+
+### 自訂配置 | Custom Configuration
+
+編輯 `peer_evaluation/config_unified.py` 來調整系統行為：
+
+*Edit `peer_evaluation/config_unified.py` to adjust system behavior:*
+
+```python
+# 檔案路徑設定 | File Path Settings
+CSV_PATH = "path/to/your/data.csv"
+OUTPUT_BASE_DIR = "custom_results/"
+
+# Vancouver 演算法調校 | Vancouver Algorithm Tuning
+VANCOUVER_CONFIG = {
+    'vG_value': 8.0,           # 群體一致性目標 | Group consistency target
+    'tolerance': 0.1,          # 收斂精度 | Convergence precision
+    'iterations': 100,         # 迭代上限 | Iteration limit
+    'damping_factor': 0.7      # 阻尼係數 | Damping factor
+}
