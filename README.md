@@ -1,7 +1,7 @@
 # 去中心化期中考互評系統 | Decentralized Midterm Peer Evaluation System
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
-[![Vancouver Algorithm](https://img.shields.io/badge/Algorithm-Vancouver-orange.svg)]()
+[![Vancouver Algorithm](https://img.shields.io/badge/Algorithm-Vancouver-orange.svg)](https://github.com/lucadealfaro/vancouver)
 
 > 一個基於 Vancouver 演算法的智慧互評系統，提供從原始資料處理到最終結果分析的完整自動化解決方案。
 > 
