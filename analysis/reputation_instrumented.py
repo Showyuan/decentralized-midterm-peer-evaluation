@@ -4,22 +4,22 @@ import numpy as np
 import unittest
 
 
-# Do we debias grades?
+# 是否對評分進行去偏差處理？
 DEBIAS = False
-# Aggregation using median?
+# 使用中位數聚合？
 AGGREGATE_BY_MEDIAN = False
-# Basic precision, as multiple of standard deviation.
+# 基本精度，以標準差的倍數表示。
 BASIC_PRECISION = 0.00001
 
 
 class User:
     
     def __init__(self, name):
-        """Initializes a user."""
+        """初始化使用者。"""
         self.name = name
         self.items = []
         self.grade = {}
-        # These are fake, used only for debugging.
+        # 這些是假的，僅用於除錯。
         self.prec = 1.0
         self.true_bias = 0.0
         
@@ -34,7 +34,7 @@ class Item:
         self.id = id
         self.users = []
         self.grade = None
-        # This is fake, used only for debugging.
+        # 這是假的，僅用於除錯。
         self.q = 0.0
 
     def add_user(self, u):
@@ -51,21 +51,21 @@ class Graph:
         self.item_dict = {}
         
     def add_review(self, username, item_id, grade):
-        # Gets, or creates, the user. 
+        # 取得或建立使用者。
         if username in self.user_dict:
             u = self.user_dict[username]
         else:
             u = User(username)
             self.user_dict[username] = u
             self.users.append(u)
-        # Gets, or creates, the item.
+        # 取得或建立項目。
         if item_id in self.item_dict:
             it = self.item_dict[item_id]
         else:
             it = Item(item_id)
             self.item_dict[item_id] = it
             self.items.append(it)
-        # Adds the connection between the two.
+        # 新增兩者之間的連接。
         u.add_item(it, grade)
         it.add_user(u)
         
@@ -76,7 +76,7 @@ class Graph:
         return self.item_dict.get(item_id)
                 
 
-# Evaluates each item via average voting.
+# 透過平均投票評估每個項目。
 def avg_evaluate_items(graph):
     item_value = {}
     for it in graph.items:
@@ -88,7 +88,7 @@ def avg_evaluate_items(graph):
 
 
 def aggregate(v, weights=None):
-    """Aggregates using either average or median."""
+    """使用平均值或中位數進行聚合。"""
     if AGGREGATE_BY_MEDIAN:
         if weights is not None:
             return median_aggregate(v, weights=weights)
@@ -411,13 +411,13 @@ class test_reputation(unittest.TestCase):
         g.add_review('anna', 'pasta', 8.5)
         g.add_review('anna', 'pollo', 5.5)
         evaluate_items(g)
-        print 'pasta', g.get_item('pasta').grade
-        print 'pizza', g.get_item('pizza').grade
-        print 'pollo', g.get_item('pollo').grade
-        print 'luca', g.get_user('luca').variance
-        print 'mike', g.get_user('mike').variance
-        print 'hugo', g.get_user('hugo').variance
-        print 'anna', g.get_user('anna').variance
+        print('pasta', g.get_item('pasta').grade)
+        print('pizza', g.get_item('pizza').grade)
+        print('pollo', g.get_item('pollo').grade)
+        print('luca', g.get_user('luca').variance)
+        print('mike', g.get_user('mike').variance)
+        print('hugo', g.get_user('hugo').variance)
+        print('anna', g.get_user('anna').variance)
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 
-# Evaluates each item via average voting.
+# 透過平均投票評估每個項目。
 def evaluate_items(graph):
     item_value = {}
     for it in graph.items:

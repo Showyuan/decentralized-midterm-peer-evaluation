@@ -5,19 +5,19 @@ import numpy as np
 import unittest
 
 
-# Do we debias grades?
+# 是否對評分進行去偏差處理？
 DEBIAS = False
-# Aggregation using median?  Generally a bad idea.
+# 使用中位數聚合？通常不是好主意。
 AGGREGATE_BY_MEDIAN = False
-# Basic precision, as multiple of standard deviation.
+# 基本精度，以標準差的倍數表示。
 BASIC_PRECISION = 0.0001
-# Uses also data from a vertex in order to send a message to that vertex?
+# 是否使用頂點自身的數據來向該頂點發送訊息？
 USE_ALL_DATA = True
 
 class User:
     
     def __init__(self, name):
-        """Initializes a user."""
+        """初始化使用者。"""
         self.name = name
         self.items = set()
         self.grade = {}
@@ -50,21 +50,21 @@ class Graph:
         self.use_all_data = use_all_data
         
     def add_review(self, username, item_id, grade):
-        # Gets, or creates, the user. 
+        # 取得或建立使用者。
         if username in self.user_dict:
             u = self.user_dict[username]
         else:
             u = User(username)
             self.user_dict[username] = u
             self.users = self.users | set([u])
-        # Gets, or creates, the item.
+        # 取得或建立項目。
         if item_id in self.item_dict:
             it = self.item_dict[item_id]
         else:
             it = Item(item_id)
             self.item_dict[item_id] = it
             self.items = self.items | set([it])
-        # Adds the connection between the two.
+        # 新增兩者之間的連接。
         u.add_item(it, grade)
         it.add_user(u)
         
@@ -75,8 +75,8 @@ class Graph:
         return self.item_dict.get(item_id)
     
     def evaluate_items(self, n_iterations=20):
-        """Evaluates items using the reputation system iterations."""
-        # Builds the initial messages from users to items. 
+        """使用聲譽系統迭代來評估項目。"""
+        # 建立從使用者到項目的初始訊息。
         for it in self.items:
             it.msgs = []
             for u in it.users:
@@ -85,16 +85,16 @@ class Graph:
                 m.grade = u.grade[it]
                 m.variance = 1.0
                 it.msgs.append(m)
-        # Does the propagation iterations.
+        # 執行傳播迭代。
         for i in range(n_iterations):
             self._propagate_from_items()
             self._propagate_from_users()
-        # Does the final aggregation step.
+        # 執行最終的聚合步驟。
         self._aggregate_item_messages()
         self._aggregate_user_messages()
 
 
-    # Evaluates each item via average voting.
+    # 使用平均投票評估每個項目。
     def avg_evaluate_items(self):
         item_value = {}
         for it in self.items:
@@ -105,17 +105,17 @@ class Graph:
             
     
     def _propagate_from_items(self):
-        """Propagates the information from items to users."""
-        # First, clears all incoming messages.
+        """從項目向使用者傳播資訊。"""
+        # 首先，清除所有傳入的訊息。
         for u in self.users:
             u.msgs = []
-        # For each item, gives feedback to the users.
+        # 對於每個項目，向使用者提供回饋。
         for it in self.items:
-            # For each user that evaluated the item, reports to that user the following
-            # quantities, computed from other users:
-            # Average/median
-            # Standard deviation
-            # Total weight
+            # 對於評估過該項目的每個使用者，向該使用者報告以下
+            # 從其他使用者計算得出的數量：
+            # 平均值/中位數
+            # 標準差
+            # 總權重
             for u in it.users:
                 if len(it.msgs) > 0:
                     grades = []
@@ -130,23 +130,23 @@ class Graph:
                     msg = Msg()
                     msg.item = it
                     msg.grade = aggregate(grades, weights=weights)
-                    # Now I need to estimate the standard deviation of the grade. 
+                    # 現在我需要估計分數的標準差。
                     msg.variance = np.sum(variances * weights * weights)
                     u.msgs.append(msg)
     
     
     def _propagate_from_users(self):
-        """Propagates the information from users to items."""
-        # First, clears the messages received in the items.
+        """從使用者向項目傳播資訊。"""
+        # 首先，清除項目中接收到的訊息。
         for it in self.items:
             it.msgs = []
-        # Sends information from users to items.  
-        # The information to be sent is a grade, and an estimated standard deviation.
+        # 從使用者向項目發送資訊。
+        # 要發送的資訊是評分和估計的標準差。
         for u in self.users:
             for it in u.items:
                 if len(u.msgs) > 0:
-                    # The user looks at the messages from other items, and computes
-                    # what has been the bias of its evaluation. 
+                    # 使用者查看來自其他項目的訊息，並計算
+                    # 其評估的偏差。
                     msg = Msg()
                     msg.user = u
                     biases = []
@@ -161,10 +161,9 @@ class Graph:
                         u.bias = aggregate(biases, weights=weights)
                     else:
                         u.bias = 0.0
-                    # The grade is the grade given, de-biased. 
+                    # 評分是給定的評分，經過去偏差處理。
                     msg.grade = u.grade[it] - u.bias
-                    # Estimates the standard deviation of the user, from the
-                    # other judged items.
+                    # 從其他已判斷的項目估計使用者的標準差。
                     variance_estimates = []
                     weights = []
                     for m in u.msgs:
@@ -173,13 +172,13 @@ class Graph:
                             variance_estimates.append((it_grade - m.grade) ** 2.0)
                             weights.append(1.0 / (self.basic_precision + m.variance))
                     msg.variance = aggregate(variance_estimates, weights=weights)
-                    # The message is ready for enqueuing.
+                    # 訊息準備好排入佇列。
                     it.msgs.append(msg)
                     
     
     def _aggregate_item_messages(self):
-        """Aggregates the information on an item, computing the grade
-        and the variance of the grade."""
+        """聚合項目上的資訊，計算評分
+        和評分的變異數。"""
         for it in self.items:
             it.grade = None
             it.variance = None
@@ -197,14 +196,14 @@ class Graph:
     
     
     def _aggregate_user_messages(self):
-        """Aggregates the information on a user, computing the 
-        variance and bias of a user."""
+        """聚合使用者上的資訊，計算使用者的
+        變異數和偏差。"""
         for u in self.users:
             u.variance = None
             if len(u.msgs) > 0:
                 biases = []
                 weights = []
-                # Estimates the bias.
+                # 估計偏差。
                 if DEBIAS:
                     for m in u.msgs:
                         weights.append(1 / (self.basic_precision + m.variance))
@@ -214,7 +213,7 @@ class Graph:
                     u.bias = aggregate(biases, weights=weights)
                 else:
                     u.bias = 0.0
-                # Estimates the grade for each item.
+                # 估計每個項目的評分。
                 variance_estimates = []
                 weights = []
                 for m in u.msgs:
@@ -225,29 +224,28 @@ class Graph:
             
             
     def evaluate_users(self):
-        """Evaluates users by comparing their variance with the one computed by
-        giving grades at random."""
-        # Computes the standard deviation of all grades ever given.
+        """透過比較使用者的變異數與隨機給分的變異數來評估使用者。"""
+        # 計算所有給定評分的標準差。
         all_grades = []
         for u in self.users:
             all_grades.extend(u.grade.values())
         overall_stdev = np.std(all_grades)
-        # The stdev of the difference between two numbers is sqrt(2) times the
-        # stdev of the numbers, assuming normal distribution.
+        # 兩個數字差值的標準差是數字標準差的 sqrt(2) 倍，
+        # 假設為常態分佈。
         overall_stdev *= 2 ** 0.5
         for u in self.users:
             u.quality = max(0.0, 1.0 - (u.variance ** 0.5) / overall_stdev)
 
 
     def avg_evaluate_users(self):
-        """Evaluates users from item grades, as if no messages had actually been sent."""
-        # Computes the standard deviation of all grades ever given.
+        """從項目評分評估使用者，就像沒有實際發送訊息一樣。"""
+        # 計算所有給定評分的標準差。
         all_grades = []
         for u in self.users:
             all_grades.extend(u.grade.values())
         overall_stdev = np.std(all_grades)
-        # The stdev of the difference between two numbers is sqrt(2) times the
-        # stdev of the numbers, assuming normal distribution.
+        # 兩個數字差值的標準差是數字標準差的 sqrt(2) 倍，
+        # 假設為常態分佈。
         overall_stdev *= 2 ** 0.5
         for u in self.users:
             diffs = []
@@ -264,7 +262,7 @@ class Msg():
 
 
 def aggregate(v, weights=None):
-    """Aggregates using either average or median."""
+    """使用平均值或中位數進行聚合。"""
     if AGGREGATE_BY_MEDIAN:
         if weights is not None:
             return median_aggregate(v, weights=weights)
@@ -282,7 +280,7 @@ def median_aggregate(values, weights=None):
         return values[0]
     if weights is None:
         weights = np.ones(len(values))
-    # Sorts. 
+    # 排序。
     vv = []
     for i in range(len(values)):
         if weights[i] > 0:
@@ -296,8 +294,8 @@ def median_aggregate(values, weights=None):
     v = np.array([x for x, _ in vv])
     w = np.array([y for _, y in vv])
     # print 'v', v, 'w', w
-    # At this point, the values are sorted, they all have non-zero weight,
-    # and there are at least two values.
+    # 此時，數值已排序，都有非零權重，
+    # 且至少有兩個數值。
     half = np.sum(w) / 2.0
     below = 0.0
     i = 0
@@ -371,20 +369,20 @@ class test_reputation(unittest.TestCase):
         g.add_review('carl', 'pollo', 5.4)
         g.add_review('luca', 'steak', 6.0)
         g.evaluate_items()
-        print 'pasta', g.get_item('pasta').grade
-        print 'pizza', g.get_item('pizza').grade
-        print 'pollo', g.get_item('pollo').grade
-        print 'variances:'
-        print 'luca', g.get_user('luca').variance
-        print 'mike', g.get_user('mike').variance
-        print 'hugo', g.get_user('hugo').variance
-        print 'anna', g.get_user('anna').variance
-        print 'qualities:'
+        print('pasta', g.get_item('pasta').grade)
+        print('pizza', g.get_item('pizza').grade)
+        print('pollo', g.get_item('pollo').grade)
+        print('variances:')
+        print('luca', g.get_user('luca').variance)
+        print('mike', g.get_user('mike').variance)
+        print('hugo', g.get_user('hugo').variance)
+        print('anna', g.get_user('anna').variance)
+        print('qualities:')
         g.evaluate_users()
-        print 'luca', g.get_user('luca').quality
-        print 'mike', g.get_user('mike').quality
-        print 'hugo', g.get_user('hugo').quality
-        print 'anna', g.get_user('anna').quality
+        print('luca', g.get_user('luca').quality)
+        print('mike', g.get_user('mike').quality)
+        print('hugo', g.get_user('hugo').quality)
+        print('anna', g.get_user('anna').quality)
 
 if __name__ == '__main__':
     unittest.main()

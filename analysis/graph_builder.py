@@ -4,15 +4,15 @@ from random import choice
 class Graph:
     
     def __init__(self, items, users, reviews=5):
-        """Initializes a random graph between the specified users
-        and items, for the specified number of reviews."""
+        """在指定的使用者和項目之間初始化隨機圖，
+        用於指定數量的評論。"""
         self.items = items
         self.users = users
         self.n_reviews = reviews
         self.n_items = len(items)
         self.n_users = len(users)
         
-        # Builds a random graph.
+        # 建立隨機圖。
         self.under_allocated_users = []
         self.under_allocated_items = []
         
