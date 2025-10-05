@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>期中考互評表單 - 區塊鏈導論</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px 20px;
+            margin: 20px;
+            border-radius: 5px;
+        }
+        
+        .info-box.warning {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+        
+        .info-box.anonymous {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        
+        .content {
+            padding: 20px 30px;
+        }
+        
+        .question-card {
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+        }
+        
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .question-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .question-score {
+            font-size: 16px;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .question-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            font-size: 15px;
+        }
+        
+        .student-answer-section {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .student-answer-section.empty-answer {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+        
+        .student-answer-section.empty-answer .answer-header strong {
+            color: #ff6f00;
+        }
+        
+        .student-answer-section.empty-answer .word-count {
+            background: #ff6f00;
+        }
+        
+        .student-answer-section.empty-answer .answer-content {
+            color: #666;
+            font-style: italic;
+            background: #fffbf0;
+        }
+        
+        .answer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #90caf9;
+        }
+        
+        .answer-header strong {
+            color: #1976d2;
+            font-size: 16px;
+        }
+        
+        .word-count {
+            background: #1976d2;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .answer-content {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            font-size: 15px;
+            color: #333;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .form-group input[type="number"] {
+            width: 150px;
+            padding: 10px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-group textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .required {
+            color: #dc3545;
+        }
+        
+        .submit-section {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            display: none;
+            margin-top: 15px;
+            color: #667eea;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .content {
+                padding: 15px 20px;
+            }
+            
+            .question-card {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>期中考互評表單</h1>
+            <p>區塊鏈導論課程</p>
+        </div>
+        
+        <div class="content">
+            <div class="info-box">
+                <strong>評分者：</strong> {{ evaluator_name }}<br>
+                <strong>截止時間：</strong> {{ deadline }}
+            </div>
+            
+            <div class="info-box anonymous">
+                <strong>匿名評分提醒：</strong><br>
+                • 本次評分採匿名制，請勿猜測被評分者身份<br>
+                • 請客觀公正地評分，您的評分將影響他人成績<br>
+                • 評語請具體且建設性
+            </div>
+            
+            <div class="info-box warning">
+                <strong>重要提醒：</strong><br>
+                • 所有題目都必須填寫評分和評語<br>
+                • 提交後無法修改，請確認後再送出<br>
+                • 請在截止時間前完成評分
+            </div>
+            
+            <form id="evaluationForm">
+                <input type="hidden" name="token" value="{{ token }}">
+                
+                {% for question in questions %}
+                <div class="question-card">
+                    <div class="question-header">
+                        <span class="question-title">題目 {{ loop.index }}</span>
+                        <span class="question-score">配分：{{ question.max_score }} 分</span>
+                    </div>
+                    
+                    <div class="question-content">{{ question.column }}</div>
+                    
+                    <!-- 學生答案區域 -->
+                    <div class="student-answer-section {% if question.answer_is_empty %}empty-answer{% endif %}">
+                        <div class="answer-header">
+                            <strong>學生答案</strong>
+                            <span class="word-count">字數：{{ question.answer_word_count }}</span>
+                        </div>
+                        <div class="answer-content">{{ question.student_answer }}</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            評分 <span class="required">*</span>
+                            <small>(0-{{ question.max_score }} 分)</small>
+                        </label>
+                        <input 
+                            type="number" 
+                            name="score_{{ question.id }}" 
+                            min="0" 
+                            max="{{ question.max_score }}" 
+                            required
+                            data-question-id="{{ question.id }}"
+                            data-max-score="{{ question.max_score }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            評語 <span class="required">*</span>
+                            <small>(請具體說明評分理由)</small>
+                        </label>
+                        <textarea 
+                            name="comment_{{ question.id }}" 
+                            required
+                            placeholder="請輸入具體的評語，說明評分理由..."
+                            data-question-id="{{ question.id }}"></textarea>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <div class="submit-section">
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        確認提交
+                    </button>
+                    <div class="loading" id="loading">
+                        提交中，請稍候...
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('evaluationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // 確認提交
+            if (!confirm('確定要提交評分嗎？\n\n提交後將無法修改！')) {
+                return;
+            }
+            
+            // 準備資料
+            const token = document.querySelector('input[name="token"]').value;
+            const submissions = [];
+            
+            // 收集所有題目的評分
+            const scoreInputs = document.querySelectorAll('input[type="number"]');
+            scoreInputs.forEach(input => {
+                const questionId = input.dataset.questionId;
+                const score = parseInt(input.value);
+                const maxScore = parseInt(input.dataset.maxScore);
+                const comment = document.querySelector(`textarea[data-question-id="${questionId}"]`).value;
+                
+                // 驗證分數範圍
+                if (score < 0 || score > maxScore) {
+                    alert(`題目 ${questionId} 的分數必須在 0-${maxScore} 之間！`);
+                    input.focus();
+                    throw new Error('Invalid score');
+                }
+                
+                // 驗證評語
+                if (!comment.trim()) {
+                    alert(`題目 ${questionId} 的評語不能空白！`);
+                    document.querySelector(`textarea[data-question-id="${questionId}"]`).focus();
+                    throw new Error('Empty comment');
+                }
+                
+                submissions.push({
+                    question_id: questionId,
+                    score: score,
+                    comment: comment.trim()
+                });
+            });
+            
+            // 顯示載入狀態
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+            
+            try {
+                // 提交資料
+                const response = await fetch('{{ server_url }}/api/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: token,
+                        submissions: submissions
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    // 提交成功，跳轉到成功頁面
+                    alert('評分提交成功！\n\n感謝您的參與！');
+                    window.location.href = '{{ server_url }}/success';
+                } else {
+                    // 提交失敗
+                    alert('提交失敗：' + (result.error || '未知錯誤'));
+                    submitBtn.disabled = false;
+                    loading.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('提交錯誤:', error);
+                alert('網路錯誤，請檢查連線後重試');
+                submitBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+        
+        // 自動儲存功能（可選）
+        let autoSaveTimer;
+        document.querySelectorAll('input, textarea').forEach(element => {
+            element.addEventListener('input', function() {
+                clearTimeout(autoSaveTimer);
+                autoSaveTimer = setTimeout(() => {
+                    // 可以在這裡實作自動儲存到 localStorage
+                    console.log('Auto-save triggered');
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>

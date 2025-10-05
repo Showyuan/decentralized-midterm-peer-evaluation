@@ -16,7 +16,7 @@ from typing import Dict, List, Optional
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
-from config_unified import PeerEvaluationConfig
+from stage0_config_unified import PeerEvaluationConfig
 
 
 class AssignmentEngine:
@@ -41,7 +41,7 @@ class AssignmentEngine:
         if preset_name:
             print(f"使用配置: {preset_name}")
         
-        config_data = self.config.get_config(preset_name)
+        config_data = self.config.get_config()
         assignment_config = config_data["peer_assignment"]
         print(f"每位學生評分數量: {assignment_config['assignments_per_student']} 份")
         print(f"分派模式: {assignment_config['balance_mode']}")
@@ -55,11 +55,8 @@ class AssignmentEngine:
             json_file_path: JSON文件路徑，若為None則使用配置文件中的路徑
         """
         if json_file_path is None:
-            # 優先使用統一輸出目錄中的文件
-            json_file_path = os.path.join(
-                self.config.get_unified_output_path("csv_analysis"),
-                "midterm_data.json"
-            )
+            # 從配置獲取 stage1 的輸出檔案
+            json_file_path = self.config.get_path('stage1_output', 'processed_data')
         
         try:
             with open(json_file_path, 'r', encoding='utf-8') as f:
@@ -89,7 +86,7 @@ class AssignmentEngine:
     
     def validate_assignment_feasibility(self) -> bool:
         """檢查分派可行性"""
-        config_data = self.config.get_config(self.preset_name)
+        config_data = self.config.get_config()
         assignment_config = config_data["peer_assignment"]
         total_students = len(self.students)
         assignments_per_student = assignment_config["assignments_per_student"]
@@ -123,7 +120,7 @@ class AssignmentEngine:
         Returns:
             分派結果字典
         """
-        config_data = self.config.get_config(self.preset_name)
+        config_data = self.config.get_config()
         assignment_config = config_data["peer_assignment"]
         balance_mode = assignment_config["balance_mode"]
         
@@ -139,7 +136,7 @@ class AssignmentEngine:
     
     def _generate_perfect_balanced_assignments(self) -> Dict:
         """生成完美平衡的分派（每個人被評分次數相同）"""
-        config_data = self.config.get_config(self.preset_name)
+        config_data = self.config.get_config()
         assignment_config = config_data["peer_assignment"]
         assignments_per_student = assignment_config["assignments_per_student"]
         allow_self_evaluation = assignment_config["allow_self_evaluation"]
@@ -202,7 +199,7 @@ class AssignmentEngine:
     
     def _generate_random_assignments(self) -> Dict:
         """生成隨機分派"""
-        config_data = self.config.get_config(self.preset_name)
+        config_data = self.config.get_config()
         assignment_config = config_data["peer_assignment"]
         assignments_per_student = assignment_config["assignments_per_student"]
         allow_self_evaluation = assignment_config["allow_self_evaluation"]
@@ -248,14 +245,14 @@ class AssignmentEngine:
     def _generate_weighted_assignments(self) -> Dict:
         """生成加權分派（可以根據學生表現等因素調整）"""
         # 目前實現與完美平衡相同，未來可以擴展
-        config_data = self.config.get_config(self.preset_name)
+        config_data = self.config.get_config()
         if config_data["system"]["verbose"]:
             print("加權分派模式（目前與完美平衡模式相同）")
         return self._generate_perfect_balanced_assignments()
     
     def _analyze_assignments(self, assignments: Dict):
         """分析分派結果統計"""
-        config_data = self.config.get_config(self.preset_name)
+        config_data = self.config.get_config()
         if not config_data["system"]["verbose"]:
             return
         
@@ -289,15 +286,11 @@ class AssignmentEngine:
     def export_assignments(self, assignments: Dict, output_dir: str = None) -> str:
         """導出分派結果"""
         if output_dir is None:
-            output_dir = self.config.get_unified_output_path("form_generation")
+            # 確保輸出目錄存在
+            output_dir = self.config.ensure_output_dir('stage2_assignment')
         
-        os.makedirs(output_dir, exist_ok=True)
-        
-        # 生成檔案名稱
-        config_data = self.config.get_config(self.preset_name)
-        timestamp = datetime.now().strftime(config_data["output"]["timestamp_format"])
-        prefix = config_data["output"]["file_prefix"]["assignments"]
-        output_file = os.path.join(output_dir, f"{prefix}_{timestamp}.json")
+        # 生成輸出檔案路徑 (使用 config 中的檔名模板)
+        output_file = self.config.get_path('stage2_assignment', 'assignments', timestamp=datetime.now())
         
         # 準備導出數據
         export_data = {
@@ -306,7 +299,7 @@ class AssignmentEngine:
         }
         
         # 添加元數據
-        config_data = self.config.get_config(self.preset_name)
+        config_data = self.config.get_config()
         if config_data["output"]["include_metadata"]:
             assignment_config = config_data["peer_assignment"]
             export_data['metadata'] = {
@@ -319,10 +312,10 @@ class AssignmentEngine:
                 'random_seed': assignment_config['random_seed'],
                 'total_assignments': sum(len(info['assigned_papers']) for info in assignments.values()),
                 'config_preset': self.preset_name,
-                'source_file': self.config.get_unified_output_path("csv_analysis", "midterm_data.json")
+                'source_file': self.config.get_path('stage1_output', 'processed_data')
             }
         
-        config_data = self.config.get_config(self.preset_name)
+        config_data = self.config.get_config()
         if config_data["system"]["verbose"]:
             print(f"\n導出分派結果到：{output_file}")
         
@@ -366,7 +359,8 @@ def main():
     # 導出結果
     output_file = engine.export_assignments(assignments, args.output)
     
-    if engine.config["system"]["verbose"]:
+    config_data = engine.config.get_config()
+    if config_data["system"]["verbose"]:
         print(f"\n分派完成！")
         print(f"輸出文件：{output_file}")
 

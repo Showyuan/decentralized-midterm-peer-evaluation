@@ -17,7 +17,7 @@ from typing import Dict, List, Tuple, Any
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
-from config_unified import PeerEvaluationConfig
+from stage0_config_unified import PeerEvaluationConfig
 
 
 class DataProcessor:
@@ -28,10 +28,10 @@ class DataProcessor:
         初始化處理器
         
         Args:
-            preset_name: 預設配置名稱
+            preset_name: 預設配置名稱（已棄用，保留用於向後兼容）
         """
         self.config_manager = PeerEvaluationConfig()
-        self.config = self.config_manager.get_config(preset_name)
+        self.config = self.config_manager.get_config()
         self.preset_name = preset_name
         self.raw_data = None
         self.students = {}
@@ -48,10 +48,11 @@ class DataProcessor:
         載入CSV數據
         
         Args:
-            csv_file_path: CSV文件路徑，若為None則使用配置文件中的路徑
+            csv_file_path: CSV文件路徑，若為None則使用預設路徑
         """
         if csv_file_path is None:
-            csv_file_path = self.config_manager.get_path("input_csv", self.preset_name)
+            # 從配置獲取 CSV 路徑
+            csv_file_path = self.config_manager.get_input_csv_path()
         
         try:
             encoding = self.config["data_processing"]["encoding"]
@@ -124,6 +125,9 @@ class DataProcessor:
             student_id = row['id']
             student_name = row['name']
             
+            # 讀取 email（Web 系統需要）
+            student_email = row['email'] if 'email' in row.index and pd.notna(row['email']) else ''
+            
             # 解析學生的答案
             answers = {}
             for q_key, q_info in self.questions.items():
@@ -155,6 +159,7 @@ class DataProcessor:
             self.students[student_id] = {
                 'name': student_name,
                 'id': student_id,
+                'email': student_email,
                 'answers': answers,
                 'submitted_time': submitted_time,
                 'attempt': attempt
@@ -163,7 +168,8 @@ class DataProcessor:
             # 輸出學生基本信息
             if self.config["system"]["verbose"]:
                 total_words = sum(ans['word_count'] for ans in answers.values())
-                print(f"   {student_id} ({student_name}): 總字數 {total_words} 字")
+                email_info = f" <{student_email}>" if student_email else ""
+                print(f"   {student_id} ({student_name}{email_info}): 總字數 {total_words} 字")
         
         if self.config["system"]["verbose"]:
             print(f"解析完成：{len(self.students)} 位學生")
@@ -240,17 +246,13 @@ class DataProcessor:
             print("請先解析數據")
             return ""
         
-        # 使用統一輸出路徑系統，確保輸出到 1_csv_analysis 子目錄
-        timestamp = datetime.now().strftime(self.config["output"]["timestamp_format"])
-        prefix = self.config["output"]["file_prefix"]["processed_data"]
-        filename = f"{prefix}_{timestamp}.json"
-        
         if output_dir is None:
-            # 使用 get_unified_output_path 獲取正確的輸出路徑
-            step_name = "csv_analysis"
-            output_file = self.config_manager.get_unified_output_path(step_name, filename, self.preset_name)
+            # 從配置獲取輸出路徑和檔名
+            output_dir = self.config_manager.ensure_output_dir('stage1_output')
+            output_file = self.config_manager.get_path('stage1_output', 'processed_data')
         else:
-            # 如果指定了輸出目錄，則直接使用它（假設它已經是正確的子目錄路徑）
+            # 如果指定了輸出目錄，使用配置的檔名
+            filename = self.config_manager.get('filenames.processed_data')
             os.makedirs(output_dir, exist_ok=True)
             output_file = os.path.join(output_dir, filename)
     
@@ -272,7 +274,7 @@ class DataProcessor:
             }
         
         # 如果有分析數據，加入到export_data中
-        if analysis and self.config["data_processing"]["include_analysis"]:
+        if analysis:
             export_data['analysis'] = analysis
         
         if self.config["system"]["verbose"]:

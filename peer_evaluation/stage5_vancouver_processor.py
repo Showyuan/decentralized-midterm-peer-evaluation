@@ -22,7 +22,7 @@ sys.path.insert(0, project_root)
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
-from config_unified import PeerEvaluationConfig
+from stage0_config_unified import PeerEvaluationConfig
 
 # 導入核心Vancouver算法
 try:
@@ -277,8 +277,7 @@ class VancouverProcessor:
             evaluation_data_path: 評分數據JSON文件路徑
             preset_name: 預設配置名稱
         """
-        self.config_manager = PeerEvaluationConfig()
-        self.config = self.config_manager.get_config(preset_name)
+        self.config = PeerEvaluationConfig()
         self.preset_name = preset_name
         self.evaluation_data_path = evaluation_data_path
         self.raw_data = None
@@ -293,6 +292,10 @@ class VancouverProcessor:
         
         with open(self.evaluation_data_path, 'r', encoding='utf-8') as f:
             self.raw_data = json.load(f)
+        
+        # 標準化資料鍵名：支援 evaluations 或 evaluation_data
+        if 'evaluations' in self.raw_data and 'evaluation_data' not in self.raw_data:
+            self.raw_data['evaluation_data'] = self.raw_data['evaluations']
         
         # 檢查 summary_stats 是否存在，如果不存在，嘗試使用 summary
         if 'summary_stats' not in self.raw_data and 'summary' in self.raw_data:
@@ -380,13 +383,18 @@ class VancouverProcessor:
             if not evaluator_id:
                 continue
                 
-            # 處理當前的數據結構格式 - 從details計算Q1~Q5加總分數
+            # 處理新的簡化格式：evaluations 直接是 {target_id: total_score}
             if 'evaluations' in evaluation and isinstance(evaluation['evaluations'], dict):
-                for evaluatee_id, eval_data in evaluation['evaluations'].items():
-                    if isinstance(eval_data, dict) and 'details' in eval_data:
+                for evaluatee_id, score_value in evaluation['evaluations'].items():
+                    # 如果是數字，直接使用（這是總分）
+                    if isinstance(score_value, (int, float)):
+                        self.graph.add_review(evaluator_id, evaluatee_id, score_value)
+                        total_evaluations += 1
+                    # 如果是字典，嘗試從 details 計算（舊格式）
+                    elif isinstance(score_value, dict) and 'details' in score_value:
                         # 從details計算Q1~Q5分數的加總
                         q_scores = []
-                        details = eval_data['details']
+                        details = score_value['details']
                         for q_num in range(1, 6):
                             score_key = f"{evaluatee_id}_Q{q_num}_score"
                             if score_key in details:
@@ -398,7 +406,7 @@ class VancouverProcessor:
                             total_evaluations += 1
                             
                             # 驗證：比較計算出的加總與原始平均分數
-                            original_score = eval_data.get('score', 0)
+                            original_score = score_value.get('score', 0)
                             expected_average = total_score / 5
                             if abs(expected_average - original_score) > 0.01:
                                 print(f"⚠️  {evaluator_id}評{evaluatee_id}: 平均分驗證失敗 (計算平均:{expected_average:.2f} vs 原始:{original_score})")
@@ -556,13 +564,12 @@ class VancouverProcessor:
             }
         }
         
-        # 確定輸出路徑
-        if self.output_dir:
-            json_path = os.path.join(self.output_dir, f"vancouver_results_{timestamp}.json")
-            excel_path = os.path.join(self.output_dir, f"vancouver_results_{timestamp}.xlsx")
-        else:
-            json_path = f"vancouver_results_{timestamp}.json"
-            excel_path = f"vancouver_results_{timestamp}.xlsx"
+        # 確保輸出目錄存在
+        output_dir = self.config.ensure_output_dir('stage6_vancouver')
+        
+        # 使用配置生成輸出路徑
+        json_path = self.config.get_path('stage6_vancouver', 'vancouver_results_json', timestamp=datetime.now())
+        excel_path = self.config.get_path('stage6_vancouver', 'vancouver_results_xlsx', timestamp=datetime.now())
         
         # 保存JSON結果
         with open(json_path, 'w', encoding='utf-8') as f:
@@ -691,15 +698,23 @@ def main():
     args = parser.parse_args()
     
     # 載入統一配置
-    from config_unified import PeerEvaluationConfig
+    from stage0_config_unified import PeerEvaluationConfig
     config = PeerEvaluationConfig()
     
     # 設定評分數據路徑
     if args.input_file:
         evaluation_data_path = args.input_file
     else:
-        # 使用統一輸出路徑 - 直接從4_result_evaluation目錄讀取
-        evaluation_data_path = config.get_unified_output_path("result_evaluation", "evaluation_results.json")
+        # 使用 vancouver_input.json（由 stage4 生成的 Vancouver 格式）
+        # 從配置獲取路徑
+        try:
+            from stage0_config_unified import PeerEvaluationConfig
+        except ImportError:
+            from .stage0_config_unified import PeerEvaluationConfig
+        
+        config = PeerEvaluationConfig()
+        # 修改：使用 vancouver_input 而不是 evaluation_results_json
+        evaluation_data_path = config.get_path('stage5_results', 'vancouver_input')
     
     # 檢查文件是否存在
     if not os.path.exists(evaluation_data_path):

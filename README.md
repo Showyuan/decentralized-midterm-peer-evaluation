@@ -1,227 +1,337 @@
-# 去中心化期中考互評系統 | Decentralized Midterm Peer Evaluation System
+# 去中心化期中考同儕互評系統
 
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
-[![Vancouver Algorithm](https://img.shields.io/badge/Algorithm-Vancouver-orange.svg)](https://github.com/lucadealfaro/vancouver)
+> **專案狀態：** ✅ 生產就緒  
+> **最後更新：** 2025-10-06  
+> **版本：** v2.0
 
-> 一個基於 Vancouver 演算法的智慧互評系統，提供從原始資料處理到最終結果分析的完整自動化解決方案。
-> 
-> *An intelligent peer evaluation system powered by the Vancouver algorithm, providing complete automated solutions from raw data processing to final result analysis.*
-
-## 快速開始 | Quick Start
-
-### 安裝與設定 | Installation & Setup
-
-1. **克隆專案 | Clone Repository**
-   ```bash
-   git clone https://github.com/Showyuan/decentralized-midterm-peer-evaluation.git
-   cd decentralized-midterm-peer-evaluation
-   ```
-
-2. **建立虛擬環境 | Create Virtual Environment** *(建議 | Recommended)*
-   ```bash
-   python -m venv venv
-   # Windows
-   venv\Scripts\activate
-   # macOS/Linux  
-   source venv/bin/activate
-   ```
-
-3. **安裝相依套件 | Install Dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **系統驗證 | System Verification**
-   ```bash
-   python peer_evaluation/main.py --status
-   ```
----
-
-## 使用指南 | User Guide
-
-### 推薦使用方式 | Recommended Usage Patterns
-
-#### 1. **一鍵完整執行** | One-Click Complete Execution
-
-適用於：*初次使用、完整測試流程*  
-*Best for: First-time use, complete testing workflow*
-
-```bash
-python peer_evaluation/main.py --workflow
-```
-
-> **執行流程** | **Execution Process**:  
-> 資料處理 → 同儕分派 → 表單生成 → 模擬填寫 → 結果收集 → Vancouver 算法 → 驗證報告  
-> *Data Processing → Peer Assignment → Form Generation → Simulation → Result Collection → Vancouver Algorithm → Verification Report*
-
-#### 2. **分步驟執行** | Step-by-Step Execution
-
-```bash
-# 步驟 1: 處理 CSV 資料 | Step 1: Process CSV data
-python peer_evaluation/main.py --data-only --csv "docs/Midterm Survey Student Analysis Report.csv"
-
-# 步驟 2: 生成同儕分派 | Step 2: Generate peer assignments  
-python peer_evaluation/main.py --assign-only --json workflow_results/1_csv_analysis/midterm_data.json
-
-# 步驟 3: 生成評分表單 | Step 3: Generate evaluation forms
-python peer_evaluation/main.py --forms-only --assignment workflow_results/2_peer_assignment/peer_assignments.json
-
-```
-
-#### 3. **配置管理** | Configuration Management
-
-```bash
-# 查看可用配置 | List available configurations
-python peer_evaluation/main.py --list-presets
-
-# 使用標準配置 | Use standard configuration
-python peer_evaluation/main.py --workflow --preset standard
-
-# 查看系統狀態 | View system status  
-python peer_evaluation/main.py --status
-```
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.0+-green.svg)](https://flask.palletsprojects.com/)
+[![Status](https://img.shields.io/badge/Status-Production-success.svg)](https://ntublockchainintro2025.online/)
 
 ---
 
-## 工作流程與輸出 | Workflow & Output Structure
+## 📋 目錄
 
-### 七階段完整流程 | Seven-Stage Complete Process
+- [專案概述](#專案概述)
+- [系統架構](#系統架構)
+- [快速開始](#快速開始)
+- [完整工作流程](#完整工作流程)
+- [自動化腳本](#自動化腳本)
+- [技術規格](#技術規格)
+- [故障排除](#故障排除)
+- [常見問題](#常見問題)
 
-```mermaid
-graph LR
-    A[CSV資料] --> B[資料處理]
-    B --> C[同儕分派]  
-    C --> D[表單生成]
-    D --> E[模擬填寫]
-    E --> F[結果收集]
-    F --> G[Vancouver算法]
-    G --> H[驗證報告]
+---
+
+## 專案概述
+
+### �� 核心目標
+
+將傳統的手動期中考評分流程，轉變為**線上去中心化同儕互評系統**，透過 Vancouver 演算法消除評分偏差，確保評分的公平性與客觀性。
+
+### ✨ 核心功能
+
+- ✅ **去中心化評分** - Vancouver 演算法自動調整評分偏差
+- ✅ **完整匿名保護** - 評分者不知道被評分者身份
+- ✅ **Web 評分介面** - 現代化的線上評分體驗
+- ✅ **自動化流程** - Token 生成、Email 發送、結果收集全自動
+- ✅ **即時監控** - 管理儀表板追蹤所有學生的提交進度
+- ✅ **安全機制** - Token 驗證、一次性使用、IP 記錄
+
+### 📊 系統特色
+
+**學生端：**
+- 📧 收到個人化評分連結 (4 個評分任務)
+- 🔗 點擊連結即可開始評分
+- 📝 查看被評分者的完整答案
+- ⭐ 對每題評分 (Q1-Q5) + 撰寫評語
+- ✅ 提交後即時確認
+
+**管理端：**
+- 📊 即時監控所有學生提交狀態
+- �� 自動發送提醒給未完成者
+- 📈 完整的統計分析
+- 📄 多格式成績報表 (JSON, Excel)
+- 🔍 驗證報告確保計算正確性
+
+---
+
+## 快速開始
+
+### 前置需求
+
+- Python 3.10+
+- SQLite 3
+- Gmail 帳號 (用於發送 Email)
+- Linux Server (建議 Ubuntu 20.04+)
+
+### 安裝步驟
+
+```bash
+# 1. Clone 專案
+git clone https://github.com/Showyuan/decentralized-midterm-peer-evaluation.git
+cd decentralized-midterm-peer-evaluation
+
+# 2. 建立虛擬環境
+python3 -m venv venv
+source venv/bin/activate
+
+# 3. 安裝依賴
+pip install -r requirements.txt
+
+# 4. 設定環境變數
+cp .env.example .env
+nano .env  # 編輯 SMTP 設定
+
+# 5. 初始化系統
+./run_setup_and_init.sh
 ```
 
-### 輸出目錄結構 | Output Directory Structure
+### 快速執行
 
-執行完整工作流程後，系統會在 `workflow_results/` 目錄下生成以下結構化輸出：
+```bash
+# 完整流程 (三步驟)
+./run_setup_and_init.sh      # 1. 初始化系統
+./run_send_emails.sh          # 2. 發送評分通知
+# ... 等待學生完成評分 ...
+./run_collect_and_grade.sh   # 3. 收集並計算成績
+```
 
-*After running the complete workflow, the system generates the following structured output in the `workflow_results/` directory:*
+---
 
+## 完整工作流程
+
+### 階段 1: 系統初始化
+
+**腳本**: `./run_setup_and_init.sh`
+
+**執行內容**:
+1. 📄 讀取學生資料 (CSV → JSON)
+2. 🎲 隨機分配評分任務 (每人評 4 份)
+3. 🔑 生成評量 Token (UUID 唯一認證)
+4. 💾 建立 SQLite 資料庫
+5. 📊 導入 Tokens 和學生資料
+6. 🌐 重啟 Web 服務
+
+**輸出檔案**:
 ```
 workflow_results/
-├── 1_csv_analysis/              # 第一階段：CSV 資料分析 | Stage 1: CSV Data Analysis
-│   └── midterm_data.json        # 結構化學生考試資料 | Structured student exam data
-│
-├── 2_peer_assignment/           # 第二階段：同儕分派 | Stage 2: Peer Assignment  
-│   └── peer_assignments.json    # 學生評分配對表 | Student evaluation pairing table
-│
-├── 3_form_generation/           # 第三階段：表單生成 | Stage 3: Form Generation
-│   └── evaluation_forms/        # 個人化 HTML 評分表單 | Personalized HTML evaluation forms
-│
-├── 4_form_simulation/           # 第四階段：表單模擬 | Stage 4: Form Simulation
-│   └── simulated_responses/     # 模擬學生評分回應 | Simulated student evaluation responses
-│
-├── 5_result_collection/         # 第五階段：結果收集 | Stage 5: Result Collection
-│   └── collected_results.json   # 整合所有評分資料 | Integrated evaluation data
-│
-├── 6_vancouver_processing/      # 第六階段：Vancouver 處理 | Stage 6: Vancouver Processing
-│   └── vancouver_results.json   # 演算法標準化結果 | Algorithm standardized results
-│
-└── 7_verification_report/       # 第七階段：驗證報告 | Stage 7: Verification Report
-    └── verification_report.xlsx # Excel 格式完整報告 | Complete Excel format report
+├── 1_data_preparation/
+│   └── midterm_data.json
+├── 2_assignment/
+│   └── peer_assignments.json
+├── 3_token_generation/
+│   ├── evaluation_tokens_*.json
+│   └── evaluation_urls_*.json
+└── 4_database/
+    └── evaluation.db
+```
+
+### 階段 2: 發送評分通知
+
+**腳本**: `./run_send_emails.sh`
+
+**發送模式**:
+
+| 模式 | 說明 | 用途 |
+|------|------|------|
+| **1. 測試模式** | 預覽內容，不實際發送 | 確認格式 |
+| **2. 單一學生** | 指定學號發送 | 測試或補發 |
+| **3. 全部學生** | 批次發送給所有人 | 正式通知 |
+| **4. 未完成者** | 僅發送給尚未評分者 | 提醒通知 |
+
+### 階段 3: 收集結果與計算成績
+
+**腳本**: `./run_collect_and_grade.sh`
+
+**執行內容**:
+1. 📊 檢查資料完整性
+2. 📥 從資料庫收集評分結果
+3. 📄 生成多格式報表
+4. �� 執行 Vancouver 演算法
+5. 📊 生成驗證報告
+
+**輸出檔案**:
+```
+workflow_results/
+├── 5_evaluation_results/
+│   ├── evaluation_results.json
+│   ├── evaluation_results.xlsx
+│   └── vancouver_input.json
+├── 6_vancouver_results/
+│   ├── vancouver_results_*.json
+│   └── vancouver_results_*.xlsx  ⭐ 最終成績單
+└── 7_final_reports/
+    └── vancouver_verification_report.xlsx
 ```
 
 ---
 
-## 資料格式說明 | Data Format Specifications
+## 自動化腳本
 
-### 輸入資料格式 | Input Data Format
+### 腳本說明
 
-| 檔案類型 | 路徑 | 說明 | Description |
-|---------|------|------|-------------|
-| **學生考試資料** | `docs/Midterm Survey Student Analysis Report.csv` | NTU COOL 匯出的 CSV 格式 | CSV format exported from NTU COOL |
+| 腳本 | 階段 | 功能 | 執行時機 |
+|------|------|------|----------|
+| `run_setup_and_init.sh` | 1 | 系統初始化 | 首次部署或重置 |
+| `run_send_emails.sh` | 2 | 發送通知 | 開始評分或提醒 |
+| `run_collect_and_grade.sh` | 3 | 收集成績 | 評分完成後 |
 
-**支援的 CSV 欄位** | **Supported CSV Fields**:
-- 學生姓名、學號、考試成績等基本資訊
-- *Student names, IDs, exam scores, and other basic information*
+### 典型使用場景
 
-### 輸出資料說明 | Output Data Description
+#### 場景 A: 首次部署系統
 
-#### 各階段輸出詳解 | Stage Output Details
-
-| 階段 | 檔案 | 內容說明 | Content Description |
-|------|------|----------|---------------------|
-| **資料處理** | `midterm_data.json` | 標準化的學生考試資料 | Standardized student exam data |
-| **同儕分派** | `peer_assignments.json` | 每位學生的評分對象清單 | List of evaluation targets for each student |
-| **表單生成** | `evaluation_forms/*.html` | 個人化的網頁評分表單 | Personalized web evaluation forms |
-| **模擬填寫** | `simulated_responses/*` | 系統生成的模擬評分資料 | System-generated simulated evaluation data |
-| **結果收集** | `collected_results.json` | 整合所有評分者的原始評分 | Integrated raw scores from all evaluators |
-| **Vancouver** | `vancouver_results.json` | 經演算法處理的最終評分 | Final scores processed by the algorithm |
-| **驗證報告** | `verification_report.xlsx` | 統計分析與品質檢核報告 | Statistical analysis and quality assurance report |
-
-### 配置參數說明 | Configuration Parameters
-
-#### Vancouver 演算法參數 | Vancouver Algorithm Parameters
-
-```python
-VANCOUVER_CONFIG = {
-    'vG_value': 8.0,          # 群體一致性目標值 | Group consistency target value
-    'tolerance': 0.1,         # 收斂容忍度 | Convergence tolerance  
-    'iterations': 25,         # 最大迭代次數 | Maximum iterations
-    'min_evaluators': 4       # 最少評分者數量 | Minimum number of evaluators
-}
+```bash
+./run_setup_and_init.sh      # 初始化
+./run_send_emails.sh          # 測試模式確認
+./run_send_emails.sh          # 正式發送
+# 訪問: https://ntublockchainintro2025.online/ 監控進度
+./run_collect_and_grade.sh   # 收集成績
 ```
+
+#### 場景 B: 提醒未完成者
+
+```bash
+cd peer_evaluation
+python3 tool_db_cli.py --stats  # 檢查進度
+cd ..
+./run_send_emails.sh            # 選擇模式 4
+```
+
 ---
 
-## 專案架構 | Project Architecture
+## 技術規格
 
-### 目錄結構 | Directory Structure
+### 技術堆疊
 
+- **Python 3.10+** - 主要開發語言
+- **Flask 3.0+** - Web 框架
+- **SQLite 3** - 資料庫
+- **Nginx** - 反向代理
+- **Let's Encrypt** - SSL 憑證
+
+### 資料庫結構
+
+```sql
+-- Tokens 表
+CREATE TABLE tokens (
+    token TEXT PRIMARY KEY,
+    evaluator_id TEXT NOT NULL,
+    target_id TEXT NOT NULL,
+    questions TEXT NOT NULL,
+    is_used BOOLEAN DEFAULT 0,
+    ...
+);
+
+-- Submissions 表
+CREATE TABLE submissions (
+    id INTEGER PRIMARY KEY,
+    token TEXT NOT NULL,
+    question_id TEXT NOT NULL,
+    score INTEGER NOT NULL,
+    comment TEXT,
+    ...
+);
 ```
-vancouver/
-├── peer_evaluation/           # 核心測試系統 | Core Testing System
-│   ├── main.py                # 系統主控制器 | Main System Controller
-│   ├── config_unified.py      # 統一配置檔 | Unified Configuration
-│   ├── data_processor.py      # 資料處理引擎 | Data Processing Engine
-│   ├── assignment_engine.py   # 分派演算法 | Assignment Algorithm
-│   ├── form_generator.py      # 表單生成器 | Form Generator
-│   ├── form_simulator.py      # 表單模擬器 | Form Simulator
-│   ├── result_collector_simple.py # 結果收集器 | Result Collector
-│   ├── vancouver_processor.py # Vancouver 處理器 | Vancouver Processor
-│   └── verification_report.py # 驗證報告器 | Verification Reporter
-│
-├── core/                     # Vancouver 演算法核心 | Vancouver Algorithm Core
-│   ├── vancouver.py          # 核心演算法實作 | Core algorithm implementation
-│   └── n_theoretical_foundations.py # 數學模型 | Mathematical models
-│
-├── analysis/                 # 分析工具模組 | Analysis Tools Module
-│   ├── vg_analysis.py        # 統計分析工具 | Statistical analysis tools
-│   └── basic_precision_analysis.py # 精度分析工具 | Precision analysis tools
-│
-├── docs/                     # 文檔與範例資料 | Documentation & Sample Data
-│   └── Midterm Survey Student Analysis Report.csv
-│
-├── workflow_results/         # 工作流程輸出 | Workflow Outputs
-│   └── (執行後自動生成 | Auto-generated after execution)
-│
-├── requirements.txt          # 相依套件清單 | Dependencies List
-└── README.md                 # 專案說明文件 | Project Documentation
-```
 
-## 進階使用 | Advanced Usage
+### Vancouver 演算法
 
-### 自訂配置 | Custom Configuration
-
-編輯 `peer_evaluation/config_unified.py` 來調整系統行為：
-
-*Edit `peer_evaluation/config_unified.py` to adjust system behavior:*
-
+**核心參數**:
 ```python
-# 檔案路徑設定 | File Path Settings
-CSV_PATH = "path/to/your/data.csv"
-OUTPUT_BASE_DIR = "custom_results/"
+R_max = 1.0      # 最大聲譽值
+v_G = 8.0        # 全域變異數
+α = 0.1          # 激勵權重
+N = 4            # 每人評分數
+```
 
-# Vancouver 演算法調校 | Vancouver Algorithm Tuning
-VANCOUVER_CONFIG = {
-    'vG_value': 8.0,           # 群體一致性目標 | Group consistency target
-    'tolerance': 0.1,          # 收斂精度 | Convergence precision
-    'iterations': 100,         # 迭代上限 | Iteration limit
-    'damping_factor': 0.7      # 阻尼係數 | Damping factor
-}
+---
+
+## 故障排除
+
+### 問題 1: Web 服務無法啟動
+
+```bash
+sudo systemctl status peereval
+sudo journalctl -u peereval -f
+sudo systemctl restart peereval
+```
+
+### 問題 2: 資料庫鎖定
+
+```bash
+sudo systemctl stop peereval
+python3 tool_db_cli.py --stats
+sudo systemctl start peereval
+```
+
+### 問題 3: Email 發送失敗
+
+檢查 `.env` 中的 SMTP 設定，確認使用「應用程式專用密碼」。
+
+---
+
+## 常見問題
+
+### Q1: 學生忘記評分連結怎麼辦？
+
+**A:** 重新發送 Email 或從 `evaluation_urls_*.json` 查找。
+
+### Q2: Token 過期了怎麼辦？
+
+**A:** 在資料庫中延長 `expires_at` 時間。
+
+### Q3: 如何防止學生互相分享 Token？
+
+**A:** 系統已內建保護：一次性使用、IP 記錄、過期機制。
+
+---
+
+## 目錄結構
+
+```
+decentralized-midterm-peer-evaluation/
+├── README.md
+├── requirements.txt
+├── run_setup_and_init.sh
+├── run_send_emails.sh
+├── run_collect_and_grade.sh
+├── peer_evaluation/
+│   ├── stage0_config_unified.py
+│   ├── stage1_data_processor.py
+│   ├── stage2_assignment_engine.py
+│   ├── stage2_token_generator.py
+│   ├── stage3_email_sender.py
+│   ├── stage3_web_server.py
+│   ├── stage4_result_collector_web.py
+│   ├── stage5_vancouver_processor.py
+│   └── templates/
+└── workflow_results/
+    ├── 1_data_preparation/
+    ├── 2_assignment/
+    ├── 3_token_generation/
+    ├── 4_database/
+    ├── 5_evaluation_results/
+    ├── 6_vancouver_results/
+    └── 7_final_reports/
+```
+
+---
+
+## 授權條款
+
+本專案採用 MIT License
+
+---
+
+## 聯絡資訊
+
+**專案連結**: [https://github.com/Showyuan/decentralized-midterm-peer-evaluation](https://github.com/Showyuan/decentralized-midterm-peer-evaluation)
+
+**線上系統**: [https://ntublockchainintro2025.online/](https://ntublockchainintro2025.online/)
+
+---
+
+**文件版本**: 2.0  
+**最後更新**: 2025-10-06  
+**維護狀態**: 持續維護中 ✅

@@ -13,21 +13,27 @@ import os
 def verify_score_calculation():
     """驗證分數計算的正確性"""
     # 載入統一配置
-    from config_unified import PeerEvaluationConfig
+    from stage0_config_unified import PeerEvaluationConfig
     config = PeerEvaluationConfig()
     
     print("🔍 驗證Vancouver算法分數計算...")
     print("=" * 60)
     
+    # 從配置獲取路徑
+    try:
+        from stage0_config_unified import PeerEvaluationConfig
+    except ImportError:
+        from .stage0_config_unified import PeerEvaluationConfig
+    
+    config = PeerEvaluationConfig()
+    
     # 載入原始評分數據
-    # 實際文件位置在 workflow_results/4_result_evaluation/ 目錄下
-    evaluation_results_path = config.get_unified_output_path("result_evaluation", "evaluation_results.json")
+    evaluation_results_path = config.get_path('stage5_results', 'evaluation_results_json')
     with open(evaluation_results_path, 'r', encoding='utf-8') as f:
         original_data = json.load(f)
     
     # 載入Vancouver算法結果（動態尋找最新結果文件）
-    # 實際文件位置在 workflow_results/5_vancouver_processing/ 目錄下
-    vancouver_results_dir = config.get_unified_output_path("vancouver_processing")
+    vancouver_results_dir = config.ensure_output_dir('stage6_vancouver')
     vancouver_files = [f for f in os.listdir(vancouver_results_dir) if f.startswith("vancouver_results_") and f.endswith(".json")]
     if not vancouver_files:
         print("❌ 錯誤: 找不到Vancouver結果文件")
@@ -42,35 +48,47 @@ def verify_score_calculation():
         vancouver_results = json.load(f)
     
     print("📊 原始數據統計:")
-    print(f"   - 評分者數量: {original_data['summary_stats']['total_evaluators']}")
-    print(f"   - 評分總數: {original_data['summary_stats']['total_evaluations']}")
-    print(f"   - 原始平均分: {original_data['summary']['overall_stats']['mean']:.2f} (單題平均)")
+    print(f"   - 評分者數量: {original_data['metadata']['total_students']}")
+    print(f"   - 評分總數: {original_data['metadata']['total_evaluations']}")
+    if 'overall' in original_data.get('summary', {}):
+        print(f"   - 原始平均分: {original_data['summary']['overall']['mean']:.2f} (單題平均)")
     
     # 重新計算加總分數來驗證
     print("\n🧮 重新計算Q1~Q5加總分數...")
     
     total_scores_by_evaluatee = {}
     evaluation_counts = {}
+    question_scores_by_student = {}  # {student_id: {Q1: [scores], Q2: [scores], ...}}
     
-    for evaluation in original_data['evaluation_data']:
-        evaluator_id = evaluation['evaluator_id']
+    # 從results結構中提取數據 (格式: results[target_id]['all_evaluations'])
+    for target_id, target_data in original_data['results'].items():
+        if target_id not in total_scores_by_evaluatee:
+            total_scores_by_evaluatee[target_id] = []
+            evaluation_counts[target_id] = 0
+            question_scores_by_student[target_id] = {f'Q{i}': [] for i in range(1, 6)}
         
-        for evaluatee_id, eval_data in evaluation['evaluations'].items():
-            # 計算Q1~Q5的總分，使用實際的details結構
-            total_score = 0
-            for q_num in range(1, 6):
-                score_key = f"{evaluatee_id}_Q{q_num}_score"
-                if score_key in eval_data['details']:
-                    score = eval_data['details'][score_key]
-                    total_score += score
+        # 按評分者聚合分數
+        evaluator_totals = {}
+        
+        for eval_item in target_data['all_evaluations']:
+            evaluator_id = eval_item['evaluator_id']
+            question_id = eval_item['question_id']
+            score = eval_item['score']
             
-            # 記錄每個被評分者的所有總分
-            if evaluatee_id not in total_scores_by_evaluatee:
-                total_scores_by_evaluatee[evaluatee_id] = []
-                evaluation_counts[evaluatee_id] = 0
+            # 只處理標準問題ID (Q1-Q5)，跳過token ID格式的舊數據
+            if question_id.startswith('Q') and question_id in question_scores_by_student[target_id]:
+                # 記錄單題分數用於後續分析
+                question_scores_by_student[target_id][question_id].append(score)
             
-            total_scores_by_evaluatee[evaluatee_id].append(total_score)
-            evaluation_counts[evaluatee_id] += 1
+            # 累加該評分者對該學生的總分（包含所有類型的評分）
+            if evaluator_id not in evaluator_totals:
+                evaluator_totals[evaluator_id] = 0
+            evaluator_totals[evaluator_id] += score
+        
+        # 記錄每個評分者給這個學生的總分
+        for evaluator_id, total_score in evaluator_totals.items():
+            total_scores_by_evaluatee[target_id].append(total_score)
+            evaluation_counts[target_id] += 1
     
     # 計算統計數據
     print("✅ 加總分數統計:")
@@ -97,28 +115,14 @@ def verify_score_calculation():
     
     comparison_data = []
     
-    # 計算每個學生的原始單題平均分
-    student_question_scores = {}  # {student_id: {Q1: [scores], Q2: [scores], ...}}
-    
-    # 收集所有學生的單題分數
-    for evaluation in original_data['evaluation_data']:
-        for evaluatee_id, eval_data in evaluation['evaluations'].items():
-            if evaluatee_id not in student_question_scores:
-                student_question_scores[evaluatee_id] = {f'Q{i}': [] for i in range(1, 6)}
-            
-            for q_num in range(1, 6):
-                score_key = f"{evaluatee_id}_Q{q_num}_score"
-                if score_key in eval_data['details']:
-                    score = eval_data['details'][score_key]
-                    student_question_scores[evaluatee_id][f'Q{q_num}'].append(score)
-    
+    # 使用已經收集好的question_scores_by_student
     for student_id in sorted(total_scores_by_evaluatee.keys()):
         # 計算原始單題平均分
         all_question_scores = []
         for q_num in range(1, 6):
             q_key = f'Q{q_num}'
-            if q_key in student_question_scores[student_id]:
-                all_question_scores.extend(student_question_scores[student_id][q_key])
+            if q_key in question_scores_by_student[student_id]:
+                all_question_scores.extend(question_scores_by_student[student_id][q_key])
         
         original_avg = np.mean(all_question_scores) if all_question_scores else 0
         
@@ -182,9 +186,10 @@ def verify_score_calculation():
     print(f"   前5名 (原始總分): {', '.join([d['student_id'] for d in original_ranking[:5]])}")
     print(f"   前5名 (Vancouver): {', '.join([d['student_id'] for d in vancouver_ranking[:5]])}")
     
-    # 保存比較報告
+    # 使用配置保存比較報告
+    verification_report_path = config.get_path('stage7_reports', 'verification_report')
+    config.ensure_output_dir('stage7_reports')  # 確保目錄存在
     df = pd.DataFrame(comparison_data)
-    verification_report_path = config.get_unified_output_path("vancouver_processing", "vancouver_verification_report.xlsx")
     df.to_excel(verification_report_path, index=False)
     print(f"\n💾 詳細比較報告已保存到: {verification_report_path}")
 
