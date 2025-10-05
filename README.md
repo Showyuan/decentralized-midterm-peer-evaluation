@@ -1,6 +1,5 @@
 # 去中心化期中考同儕互評系統
 
-> **專案狀態：** ✅ 生產就緒  
 > **最後更新：** 2025-10-06  
 > **版本：** v2.0
 
@@ -265,26 +264,6 @@ python3 tool_db_cli.py --stats
 sudo systemctl start peereval
 ```
 
-### 問題 3: Email 發送失敗
-
-檢查 `.env` 中的 SMTP 設定，確認使用「應用程式專用密碼」。
-
----
-
-## 常見問題
-
-### Q1: 學生忘記評分連結怎麼辦？
-
-**A:** 重新發送 Email 或從 `evaluation_urls_*.json` 查找。
-
-### Q2: Token 過期了怎麼辦？
-
-**A:** 在資料庫中延長 `expires_at` 時間。
-
-### Q3: 如何防止學生互相分享 Token？
-
-**A:** 系統已內建保護：一次性使用、IP 記錄、過期機制。
-
 ---
 
 ## 目錄結構
@@ -315,13 +294,6 @@ decentralized-midterm-peer-evaluation/
     ├── 6_vancouver_results/
     └── 7_final_reports/
 ```
-
----
-
-## 授權條款
-
-本專案採用 MIT License
-
 ---
 
 ## 聯絡資訊
@@ -334,4 +306,3 @@ decentralized-midterm-peer-evaluation/
 
 **文件版本**: 2.0  
 **最後更新**: 2025-10-06  
-**維護狀態**: 持續維護中 ✅
